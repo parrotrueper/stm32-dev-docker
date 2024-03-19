@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# set to 1 to enable debug, 0 to disable
+dbgscript=0
+if [[ "$dbgscript" -eq 1 ]]; then set -x ; fi
+
+srcdir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+echo "Installing dependencies..."
+echo "........................."
+sudo apt -y install   \
+    unzip             \
+    usbutils          \
+    x11-common        \
+    x11-utils         \
+    dbus-x11          \
+    fontconfig-config \
+    fonts-dejavu-core \
+    hwdata            \
+    linux-tools-virtual
+sudo update-alternatives --install /usr/local/bin/usbip usbip $(command -v ls /usr/lib/linux-tools/*/usbip | tail -n1) 20
+sudo apt update   
+sudo apt -y upgrade 
+echo ".................... done"
+
+dial_perms="${srcdir}/set-dialout.sh"
+if [[ ! -e "${dial_perms}" ]]; then 
+    echo "ERROR:"
+    echo "${dial_perms} NOT FOUND!"
+    exit 1
+fi
+${dial_perms}
+
+gdbsetup="${srcdir}/win10/setup-gdb-win.sh"
+if [[ ! -e "${gdbsetup}" ]]; then 
+    echo "ERROR:"
+    echo "${gdbsetup} NOT FOUND!"
+    exit 1
+fi
+${gdbsetup}
+
+# debug off
+if [[ "$dbgscript" -eq 1 ]]; then set +x ; fi    

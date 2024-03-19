@@ -1,0 +1,77 @@
+#!/bin/bash
+
+# set to 1 to enable debug, 0 to disable
+dbgscript=0
+if [[ "$dbgscript" -eq 1 ]]; then set -x ; fi
+
+# test whether we are running on WSL 
+onwsl="/proc/sys/fs/binfmt_misc/WSLInterop"
+if [[ -f "$onwsl" ]]; then
+    iswsl=true
+elif [[ "$(systemd-detect-virt)" != *"none"* ]]; then 
+    echo "Not sure what system you are on sunny, assuming the host OS is Windows"
+    echo "If this is not the case things may not go as planned..."
+    iswsl=true
+else 
+    iswsl=false
+fi
+
+# create directory in the project root where the docker helper scripts will live
+caller_root=$PWD
+printf "\nSetting project root as: $PWD\n\n"
+tgtdir="${caller_root}/dev-scripts"
+# name the directory for the docker container scripts 
+mkdir -p "${tgtdir}"
+
+if [[ "${iswsl}" = true ]]; then
+    # and windows ones too
+    mkdir -p "${tgtdir}/win10"
+fi    
+
+# get the location of the scripts (should be where this script lives)
+srcdir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+# now copy over the scripts we need to run the container
+printf "getting helper scripts ...\n\n"
+
+
+# helper to start the container
+script_list=("${srcdir}/run-container")
+# container configuration
+script_list+=("${srcdir}/cfg-container.sh")
+# container init script
+script_list+=("${srcdir}/container-init.sh")
+#<>## container shell init script
+#<>#script_list+=("${srcdir}/bashrc")
+# container shell paths
+script_list+=("${srcdir}/source-me.sh")
+# helper to start the GDB server on the host
+script_list+=("${srcdir}/gdbs-host")
+
+# make sure all the scripts exist.
+for script in "${script_list[@]}" ; do
+    if [[ ! -e "${script}" ]]; then
+        echo "ERROR:"
+        echo "${script} NOT FOUND!"
+        echo "This is not going to plan......"
+        echo ""
+    else
+        cp "${script}" "${tgtdir}/"
+        echo "${script##*/}"
+    fi
+done
+
+if [[ "${iswsl}" = true ]]; then
+    # starts the GDB server on Windows hosts
+    winscript="${srcdir}/win10/win-start-gdb-server.ps1"
+    cp "${winscript}" "${tgtdir}/win10/"
+    #echo  "${winscript##*/}"
+fi    
+
+printf "\n\nAll done!\n\n"
+printf "Place your project tree here\n\n"
+printf "Start the container by running:\n\n"
+printf "$ ./dev-scripts/run-container\n\n"
+
+
+if [[ "$dbgscript" -eq 1 ]]; then set +x ; fi    

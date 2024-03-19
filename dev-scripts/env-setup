@@ -1,0 +1,54 @@
+#!/bin/bash
+
+echo "--------------"
+echo "${0##*/}"
+echo "---------------"
+
+# set to 1 to enable debug, 0 to disable
+dbgscript=0
+if [[ "$dbgscript" -eq 1 ]]; then set -x ; fi
+
+srcdir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+# figure out if we are running on Ubuntu native or on WSL
+onwsl="/proc/sys/fs/binfmt_misc/WSLInterop"
+if [[ -f "$onwsl" ]]; then
+    iswsl=true
+elif [[ "$(systemd-detect-virt)" != *"none"* ]]; then 
+    echo "Not sure what system you are on sunny, assuming the host OS is Windows"
+    echo "If this is not the case things may not go as planned..."
+    iswsl=true
+else 
+    iswsl=false
+fi
+
+# On WSL
+###############
+if [[ "${iswsl}" = true ]]; then
+    ${srcdir}/wsl-setup
+    if [[ "$dbgscript" -eq 1 ]]; then set +x ; fi
+    exit 0
+fi    
+
+# On Linux host
+#################
+# make sure all our dependencies exist
+doc_cfg="${srcdir}/cfg-container.sh"
+if [[ ! -e "${doc_cfg}" ]]; then 
+    echo "${doc_cfg} NOT FOUND!"
+    exit 1
+fi
+
+dial_perms="${srcdir}/set-dialout.sh"
+if [[ ! -e "${dial_perms}" ]]; then 
+    echo "${dial_perms} NOT FOUND!"
+    exit 1
+fi
+
+# Setup dialout permissions
+###########################
+${dial_perms}
+
+
+if [[ "$dbgscript" -eq 1 ]]; then set +x ; fi
+

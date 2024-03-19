@@ -1,0 +1,17 @@
+#!/bin/bash
+# can be run from your project source root, for example ~/projects/blinky/
+clear
+echo "this needs to be run either in a container terminal or a devcontainer terminal"
+source ../dev-scripts/source-me.sh
+
+#  eclipse \
+#  --launcher.suppressErrors \
+#  -nosplash \
+#  -application org.eclipse.cdt.managedbuilder.core.headlessbuild \
+#  -data /path/to/workspace \
+#  -cleanBuild "project/configuration"
+
+proj_dir=${PWD##*/}
+#echo "$proj_dir"
+proj_config="Debug"
+headless-build.sh -data ~/ -importAll ../$proj_dir -cleanBuild "${proj_dir}/${proj_config}"

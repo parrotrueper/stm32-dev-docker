@@ -1,0 +1,85 @@
+#!/bin/bash
+
+# set to 1 to enable debug, 0 to disable
+dbgscript=0
+if [[ "$dbgscript" -eq 1 ]]; then set -x ; fi
+
+callerdir=$PWD
+srcdir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+# make sure all our dependencies exist
+doc_cfg="${srcdir}/cfg-container.sh"
+if [[ ! -e "${doc_cfg}" ]]; then 
+    echo "ERROR:"
+    echo "${doc_cfg} NOT FOUND!"
+    exit 1
+fi
+
+# Make sure we have binaries for the image
+##########################################
+# a file with a name: en.st-stm32cubeide_xxxx_amd.sh.zip should exist in
+# <this repo>/docker-data/linux-stm32-ide/
+retearly=false
+pushd "${callerdir}/docker-data/linux-stm32-ide/" || exit 1
+    stinstaller=`ls -l | grep en.st-stm32cubeide`
+    if [[ -z "$stinstaller" ]];then
+        echo "ERROR: en.st-stm32cubeide_xxxx_amd.sh.zip not found in $PWD/ "
+        echo "Download the installer and place it in docker-data/linux-stm32-ide/"
+        retearly=true
+    else
+        # get the version number 
+        # dump everything before the version number
+        stversion=${stinstaller##*ide_}
+        # dump everything after amd64
+        stversion=${stversion%_amd64*}
+        # now we need the short version for the path
+        stbinversion=${stversion%_*}
+        stbinversion=${stbinversion%_*}
+        stbinversion=${stbinversion%_*}
+
+        # create the file that the container can source
+        {
+         printf "%s/bin/bash\n" '#!'
+         printf "PATH=\"%s{PWD}/dev-scripts:%s{PATH}\"\n" '$' '$'
+         printf "PATH=\"/opt/st/stm32cubeide_%s:%s{PATH}\"\n" $stbinversion '$'
+         printf "%s fix GTK accessibility error\n" '#'
+         printf "export NO_AT_BRIDGE=1\n"
+        } > "${srcdir}/source-me.sh"
+        chmod +x "${srcdir}/source-me.sh"
+        echo ""
+        echo "version: ${stversion}"
+        echo "short version: ${stbinversion}"
+        echo ""
+    fi
+
+popd || exit 1
+
+
+# script that configures the Docker image
+source "${doc_cfg}"
+
+if [[ "$retearly" = false ]]; then
+    echo "Building Docker image $CFG_IMAGE_NAME..."
+
+    if [[ "{$1,,}" = "clean" ]]; then
+        DOCKER_BUILDKIT=1 docker buildx build        \
+            --no-cache                               \
+            --build-arg "ARG_USER_UID=$(id -u)"      \
+            --build-arg "ARG_USER_GID=$(id -g)"      \
+            --build-arg "ARG_USR=${CFG_ARG_USR}"     \
+            --build-arg "ARG_TZ_LANG=${CFG_LOCALE}"  \
+            --build-arg "ARG_STIDE_V=${stversion}"   \
+            -t "${CFG_IMAGE_NAME}" .
+    else
+        DOCKER_BUILDKIT=1 docker buildx build        \
+            --build-arg "ARG_USER_UID=$(id -u)"      \
+            --build-arg "ARG_USER_GID=$(id -g)"      \
+            --build-arg "ARG_USR=${CFG_ARG_USR}"     \
+            --build-arg "ARG_TZ_LANG=${CFG_LOCALE}"  \
+            --build-arg "ARG_STIDE_V=${stversion}"   \
+            -t "${CFG_IMAGE_NAME}" .
+    fi        
+fi
+
+# debug off
+if [[ "$dbgscript" -eq 1 ]]; then set +x ; fi    

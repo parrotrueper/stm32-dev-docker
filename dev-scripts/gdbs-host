@@ -1,0 +1,95 @@
+#!/bin/bash
+
+# set to 1 to enable debug, 0 to disable
+dbgscript=0
+if [[ "$dbgscript" -eq 1 ]]; then set -x ; fi
+
+srcdir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+##################
+# Function that runs the PowerShell script for the GDB server if WSL is detected
+##################
+run_on_win_host(){
+    # we are on a Windows host so run the PowerShell script instead
+
+    # check that the script is available
+    scriptname="win-start-gdb-server.ps1"
+    win_script="${srcdir}/win10/${scriptname}"
+    if [[ ! -e "${win_script}" ]]; then 
+        echo "ERROR! File not found: ${win_script}"
+        return 1
+    fi
+
+    # copy the PowerShell script to the Windows drive
+    windest="/mnt/c/here"
+    mkdir -p ${windest}
+    cp ${win_script} ${windest}
+    psexe="/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
+    pushd ${windest} || return 1
+        echo "Running powershell script"
+        ${psexe} -ExecutionPolicy bypass -File ${scriptname}
+    popd || return 1        
+    return 0
+}
+
+
+##################
+# Function that starts the GDB server on the host
+##################
+run_on_linux_host(){
+
+    port_num=61234
+    # we are on a linux host
+    # Expecting the server and programmer to be installed under /opt/st, make sure it is available
+    stgdbserv=`find /opt/st -name ST-LINK_gdbserver`
+    if [[ -z "${stgdbserv}" ]]; then
+        echo "ERROR: ST-LINK_gdbserver NOT FOUND! in /opt/st/"
+        return 1
+    fi
+    # now check for the CLI programmer
+    st_prog_cli=`find /opt/st -name STM32_Programmer_CLI`
+    # just get the path now
+    if [[ -z "${st_prog_cli}" ]]; then
+        echo "ERROR: STM32_Programmer_CLI NOT FOUND! in /opt/st/"
+        return 1
+    fi
+    # just get the path for the programmer cli
+    st_prog_cli_path=${st_prog_cli%/*}
+
+    # just the path for the gdb server binary
+    st_gdb_serv_path=${stgdbserv%/*}
+
+
+    # start the GDB server
+    cd ${st_gdb_serv_path}
+
+    # Start the GDB server 
+    # startup arguments
+    # -e enable persisten mode
+    # -f <log file>
+    # -p TCP port
+    # -r <max delay> in status refresh in seconds
+    # -d enable SWD mode
+    # -cp <path> to the CLI programmer
+
+    ./ST-LINK_gdbserver -e -f /opt/st/debug.log -p ${port_num} -r 15 -d -cp ${st_prog_cli_path}
+    # we do not return here
+    
+}
+
+# test whether we are running on WSL
+onwsl="/proc/sys/fs/binfmt_misc/WSLInterop"
+
+if [[ -f "$onwsl" ]]; then
+    echo "WSL detected"
+    run_on_win_host
+    retval=$?
+else
+    run_on_linux_host    
+    retval=$?
+fi    
+
+# disable debug
+if [[ "$dbgscript" -eq 1 ]]; then set +x ; fi
+
+exit $retval

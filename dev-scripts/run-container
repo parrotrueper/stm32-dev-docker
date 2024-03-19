@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# set to 1 to enable debug, 0 to disable
+dbgscript=0
+if [[ "$dbgscript" -eq 1 ]]; then set -x ; fi
+
+# script to start the development environment container
+# requires the docker image to be built first, see build-docker-img
+
+# make sure all our dependencies exist
+doc_cfg="./dev-scripts/cfg-container.sh"
+if [[ ! -e "${doc_cfg}" ]]; then 
+    echo "ERROR:"
+    echo "${doc_cfg} NOT FOUND!"
+    exit 1
+fi
+source ${doc_cfg}
+
+inifile="./dev-scripts/container-init.sh"
+if [[ ! -e "${inifile}" ]]; then 
+    echo "ERROR:"
+    echo "${inifile} NOT FOUND!"
+    exit 1
+fi
+
+# make sure we've got a history file
+hst_file=".bash_history"
+
+if [ ! -e "$hst_file" ] ; then
+    touch "$hst_file"
+fi
+
+xhost +local:
+exec docker run       \
+        --rm          \
+        --tty         \
+        --interactive \
+        --privileged  \
+        --env "TERM=xterm-256color"         \
+        --pid=host -e DISPLAY="$DISPLAY"    \
+        --network host                      \
+        --hostname ${CFG_IMAGE_NAME}        \
+        --volume /dev:/dev                  \
+        --volume /tmp/.X11-unix:/tmp/.X11-unix:ro  \
+        --volume /etc/timezone:/etc/timezone:ro    \
+        --volume /usr/share/zoneinfo/Europe/London:/etc/localtime:ro \
+        --volume "/media/$USER":"/media/${CFG_ARG_USR}" \
+        --volume "$(pwd)":"/home/${CFG_ARG_USR}" \
+        "${CFG_IMAGE_NAME}":latest \
+        /bin/bash --init-file ${inifile}
+
+# debug off
+if [[ "$dbgscript" -eq 1 ]]; then set +x ; fi    
