@@ -12,6 +12,7 @@
 .stmcufinder
 STM32CubeIDE
 .swt
+bashrc
 
 # secrets
 .ssh/
