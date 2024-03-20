@@ -16,7 +16,8 @@ it in the `docker-data/linux-stm32-ide` directory of this repository.
 
     `en.st-stm32cubeide_1.15.0_20695_20240315_1429_amd64.deb_bundle.sh.zip`
 
-2. Setup your host, depending on whether you are on Windows or Linux
+2. Install the STLink GDB Server on the host (*STM32CubeCLTxxx*), depending on 
+whether you are on Windows or Linux.
 
 Setup [Windows Host](Win10Host.md) 
 
