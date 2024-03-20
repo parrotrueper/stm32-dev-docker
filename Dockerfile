@@ -33,7 +33,7 @@ ARG ARG_TZ_LANG=en_GB.UTF-8
 ##############################
 ENV DEBIAN_FRONTEND=noninteractive
 USER root
-COPY "${ARG_DOCK_DATA_PATH}/.bashrc" /etc/bash.bashrc
+COPY "${ARG_DOCK_DATA_PATH}/bashrc" /etc/bash.bashrc
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     # date and time

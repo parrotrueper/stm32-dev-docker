@@ -50,6 +50,15 @@ pushd "${callerdir}/docker-data/linux-stm32-ide/" || exit 1
         echo "version: ${stversion}"
         echo "short version: ${stbinversion}"
         echo ""
+        # now create a fresh bashrc file that will contain the paths
+        cp "${srcdir}/../docker-data/.bashrc" "${srcdir}/../docker-data/bashrc"
+        # add the path
+        {
+         printf "PATH=\"%s{PWD}/dev-scripts:%s{PATH}\"\n" '$' '$'
+         printf "PATH=\"/opt/st/stm32cubeide_%s:%s{PATH}\"\n" $stbinversion '$'
+         printf "%s fix GTK accessibility error\n" '#'
+         printf "export NO_AT_BRIDGE=1\n"
+        } >> "${srcdir}/../docker-data/bashrc"
     fi
 
 popd || exit 1
