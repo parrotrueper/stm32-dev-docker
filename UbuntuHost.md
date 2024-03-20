@@ -14,6 +14,21 @@ GDB server. On the host or the machine connected to the hardware.
     Install this in `/opt/` as our helper scripts are expecting the GDB server 
     to be in: `/opt/st/stm32cubectl/STLink-gdb-server/bin`
 
+    Installation:
+
+    ```bash
+    cp en.st-stm32cubeclt_<your version>_amd64.deb_bundle.sh.zip /opt/
+    cd /opt
+    unzip en.st-stm32cubeclt_<your version>_amd64.deb_bundle.sh.zip 
+    # make it executable and note the change in the name
+    chmod a+x stclt/st-stm32cubeclt_<your version>_amd64.deb_bundle.sh
+    # unpack it
+    ./st-stm32cubeclt_<your version>_amd64.deb_bundle.sh --tar -xvf -C ./
+    # installation needs to be done as sudo
+    sudo LICENSE_ALREADY_ACCEPTED=1 bash -c ./setup.sh
+    sudo chown -R $(id -u):$(id -g) /opt/st
+    ```
+
 
 2. Setup the dev environment.
 
