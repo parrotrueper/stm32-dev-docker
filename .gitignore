@@ -11,6 +11,7 @@
 .stmcube 
 .stmcufinder
 STM32CubeIDE
+.swt
 
 # secrets
 .ssh/
