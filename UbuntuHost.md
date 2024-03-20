@@ -21,7 +21,7 @@ GDB server. On the host or the machine connected to the hardware.
     cd /opt
     unzip en.st-stm32cubeclt_<your version>_amd64.deb_bundle.sh.zip 
     # make it executable and note the change in the name
-    chmod a+x stclt/st-stm32cubeclt_<your version>_amd64.deb_bundle.sh
+    chmod a+x ./st-stm32cubeclt_<your version>_amd64.deb_bundle.sh
     # unpack it
     ./st-stm32cubeclt_<your version>_amd64.deb_bundle.sh --tar -xvf -C ./
     # installation needs to be done as sudo
