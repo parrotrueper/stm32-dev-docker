@@ -57,6 +57,7 @@ RUN apt-get update && \
     flawfinder \
     clang-format \
     gdb \
+    openocd \
     stlink-tools \
     libusb-1.0-0     \
     libusb-1.0-0-dev \
