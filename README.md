@@ -135,7 +135,7 @@ headless-build.sh -data ~/ -importAll ../blinky -cleanBuild blinky/Debug
 ```
 
 The commands above are also available via a template script you can adapt to suit
-your needs. See [build-headless](dev-scripts/build-headless) for details.
+your needs. See [project-build-headless-template](dev-scripts/project-build-headless-template) for details.
 
 You will still able to debug from the ST IDE by launching it from the container 
 terminal, or from the VSC terminal.
