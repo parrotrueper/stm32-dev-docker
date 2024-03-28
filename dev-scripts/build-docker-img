@@ -70,7 +70,7 @@ source "${doc_cfg}"
 if [[ "$retearly" = false ]]; then
     echo "Building Docker image $CFG_IMAGE_NAME..."
 
-    if [[ "{$1,,}" = "clean" ]]; then
+    if [[ "$1" == "clean" ]]; then
         DOCKER_BUILDKIT=1 docker buildx build        \
             --no-cache                               \
             --build-arg "ARG_USER_UID=$(id -u)"      \
